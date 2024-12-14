@@ -1,0 +1,337 @@
+{% block styles %}
+<style>
+    body, html {
+        height: 100%;
+        margin: 0;
+        font-family: 'Arial', sans-serif;
+    }
+
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .chat-header {
+        background-color: #4A90E2;
+        color: white;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chat-header h3 {
+        margin: 0;
+        width:10%;
+    }
+
+    .new-chat-btn {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .new-chat-btn:hover {
+        background-color: #0056b3;
+    }
+
+    .messages-box {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background-color: #F0F4F8;
+    }
+
+    .messages-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .message {
+        margin-bottom: 15px;
+    }
+
+    .message-text {
+        padding: 12px;
+        border-radius: 8px;
+        max-width: 80%;
+        word-wrap: break-word;
+    }
+
+    .sent {
+        background-color: #dcf8c6;
+        margin-left: auto;
+    }
+
+    .received {
+        background-color: #f1f0f0;
+        margin-right: auto;
+    }
+
+    .message-form {
+        display: flex;
+        padding: 10px;
+        background-color: #fff;
+    }
+
+    .message-input {
+        flex: 1;
+        border-radius: 5px;
+        padding: 10px;
+        border: 1px solid #ddd;
+    }
+
+    .send-btn {
+        background-color: #4A90E2;
+        color: white;
+        border: none;
+        padding: 10px;
+        cursor: pointer;
+        border-radius: 5px;
+        margin-left: 10px;
+    }
+
+    .send-btn:hover {
+        background-color: #357ABD;
+    }
+
+    /* History Sidebar from Left to Right */
+    .history-sidebar {
+        position: fixed;
+        top: 0;
+        left: -300px; /* Initially position to the left */
+        width: 300px;
+        height: 100%;
+        background-color: #fff;
+        box-shadow: 2px 0px 5px rgba(0, 0, 0, 0.1);
+        transition: left 0.3s ease; /* Transition from left */
+        overflow-y: auto;
+        padding: 20px;
+        z-index: 1000; /* Ensures it stays above other content */
+    }
+
+    .history-sidebar.open {
+        left: 0; /* When the sidebar is open, it will slide to the left */
+    }
+
+    .history-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .history-item {
+        padding: 10px;
+        cursor: pointer;
+    }
+
+    .history-item:hover {
+        background-color: #f1f1f1;
+    }
+
+    /* Fixed Logout Button */
+    .logout-btn {
+        position: fixed;
+        top: 20px;
+        right: 100px;
+        background-color: #FF4D4D; /* Red Color */
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        z-index: 9999; /* Keeps it above other elements */
+    }
+
+    .logout-btn:hover {
+        background-color: #FF1A1A; /* Darker Red on Hover */
+    }
+
+    /* History Button to toggle the sidebar */
+    .history-btn {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .history-btn:hover {
+        background-color: #0056b3;
+    }
+
+    /* Ensures that the history sidebar toggle button does not interfere with other UI elements */
+    .history-btn {
+        position: fixed;
+        top: 20px;
+        left: 20px; /* Position at top-left of the screen */
+        z-index: 1001; /* Higher than chat components */
+    }
+   
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <h3>Ask Ergoochatbot</h3>
+        <button class="new-chat-btn" id="newChatBtn">+ New Chat</button>
+        <button class="toggle-history-btn" id="toggleHistoryBtn">History</button>
+    </div>
+
+    <div class="messages-box" id="chatBox">
+        <ul class="messages-list">
+            {% for chat in chats %}
+            <li class="message {% if chat.user == request.user %}sent{% else %}received{% endif %}">
+                <div class="message-text">
+                    <b>{% if chat.user == request.user %}You{% else %}AI Chatbot{% endif %}:</b>
+                    <p>{{ chat.message }}</p>
+                    <p><i>{{ chat.response }}</i></p>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <form class="message-form" id="messageForm">
+        {% csrf_token %}
+        <input type="text" class="message-input" placeholder="Type a message..." id="messageInput">
+        <button type="submit" class="send-btn">Send</button>
+    </form>
+
+    <div class="history-sidebar" id="historySidebar">
+        <h4>Chat History</h4>
+        <ul class="history-list">
+            {% for session in sessions %}
+            <li class="history-item" data-session-id="{{ session.id }}">
+                Session {{ session.id }} <br>
+                <small>{{ session.created_at|date:"d M Y, h:i A" }}</small>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+</div>
+
+<a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Wait for the DOM to be fully loaded before executing JavaScript
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // Get references to DOM elements
+        const historySidebar = document.getElementById('historySidebar'); // Sidebar containing chat history
+        const messageForm = document.getElementById('messageForm'); // The form that contains the message input
+        const messageInput = document.getElementById('messageInput'); // The input field for typing a message
+        const messagesList = document.querySelector('.messages-list'); // The list element where messages will be displayed
+        const newChatBtn = document.getElementById('newChatBtn'); // Button to start a new chat
+        const toggleHistoryBtn = document.getElementById('toggleHistoryBtn'); // Button to toggle chat history sidebar visibility
+        const chatBox = document.getElementById('chatBox'); // The main chatbox element
+
+        // Toggle the visibility of the history sidebar when the toggle button is clicked
+        toggleHistoryBtn.addEventListener('click', function () {
+            if (historySidebar.classList.contains('open')) {
+                // If the sidebar is open, close it and show the chat
+                historySidebar.classList.remove('open');
+                chatBox.style.display = 'block';
+                toggleHistoryBtn.textContent = 'History'; // Change the button text
+            } else {
+                // If the sidebar is closed, open it and hide the chat
+                historySidebar.classList.add('open');
+                chatBox.style.display = 'none';
+                toggleHistoryBtn.textContent = 'Return to Chat'; // Change the button text
+            }
+        });
+
+        // When the 'New Chat' button is clicked, redirect to the new chat URL
+        newChatBtn.addEventListener('click', () => {
+            window.location.href = "{% url 'new_chat' %}"; // Redirect to the URL for starting a new chat
+        });
+
+        // Handle the form submission when the user sends a message
+        messageForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the form from submitting in the traditional way
+            const message = messageInput.value.trim(); // Get the user's message and trim whitespace
+            if (message === "") return; // If the message is empty, do nothing
+
+            // Create a new list item to display the user's message in the chat
+            const userMessage = document.createElement('li');
+            userMessage.classList.add('message', 'sent'); // Add classes for styling
+            userMessage.innerHTML = `<div class="message-text"><b>You:</b> ${message}</div>`; // Insert message text
+            messagesList.appendChild(userMessage); // Add the message to the list
+            messagesList.scrollTop = messagesList.scrollHeight; // Scroll to the bottom of the chat
+
+            // Send the message to the server via a POST request
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value // Include CSRF token for security
+                },
+                body: JSON.stringify({ message }) // Send the message as JSON
+            })
+            .then(response => response.json()) // Parse the JSON response from the server
+            .then(data => {
+                // Get the response from the AI or show a fallback message if no response is returned
+                const botResponse = data.response || "I couldn't understand that.";
+                // Create a new list item to display the AI's response
+                const botMessage = document.createElement('li');
+                botMessage.classList.add('message', 'received'); // Add classes for styling
+                botMessage.innerHTML = `<div class="message-text"><b>AI Chatbot:</b> ${botResponse}</div>`; // Insert bot response text
+                messagesList.appendChild(botMessage); // Add the response to the chat
+                messagesList.scrollTop = messagesList.scrollHeight; // Scroll to the bottom of the chat
+            })
+            .catch(error => {
+                console.error('Error:', error); // Log any errors to the console
+                alert('Failed to send the message. Please try again.'); // Show an alert if the request fails
+            });
+
+            messageInput.value = ''; // Clear the message input field
+        });
+
+        // Event listener for clicking on chat history items to load previous sessions
+        const historyItems = document.querySelectorAll('.history-item');
+        historyItems.forEach(item => {
+            item.addEventListener('click', function () {
+                const sessionId = this.getAttribute('data-session-id'); // Get the session ID from the clicked item
+
+                // Send a request to load the chat history for the selected session
+                fetch(`/generate-gemini-response/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value // Include CSRF token
+                    },
+                    body: JSON.stringify({ sessionId }) // Send the session ID to the server
+                })
+                .then(response => response.json()) // Parse the JSON response
+                .then(data => {
+                    console.log(data.response); // Log the response from the server (chat history)
+
+                    // Optionally, render chat history in the UI here
+                    // For example, you could append the history to the chat box
+                    if (data.response) {
+                        const historyMessage = document.createElement('li');
+                        historyMessage.classList.add('message', 'received');
+                        historyMessage.innerHTML = `<div class="message-text"><b>AI Chatbot (History):</b> ${data.response}</div>`;
+                        messagesList.appendChild(historyMessage);
+                        messagesList.scrollTop = messagesList.scrollHeight;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error); // Log any errors to the console
+                    alert('Failed to load chat history.'); // Show an alert if the request fails
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

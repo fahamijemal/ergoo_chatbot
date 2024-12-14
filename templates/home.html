@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Ergoobot Home{% endblock %}
+
+{% block styles %}
+    <style>
+        body {
+            background-color: #f4f6f9;
+            color: #333;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .hero {
+            background: url('your-image-url.jpg') no-repeat center center;
+            background-size: cover;
+            height: 80vh;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            box-shadow: inset 0 0 0 1000px rgba(0, 123, 255, 0.5);
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 300;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        .btn-primary, .btn-secondary {
+            padding: 10px 20px;
+            font-size: 1rem;
+            border: none;
+            transition: transform 0.3s;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-primary:hover, .btn-secondary:hover {
+            transform: scale(1.05);
+        }
+
+        .footer {
+            background: #007bff;
+            color: #fff;
+            padding: 20px 0;
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Hero Section -->
+    <div class="hero">
+        <h1>Welcome to Ergoobot</h1>
+        <p>Your smart assistant, always ready to help.</p>
+        <a href="{% url 'register' %}" class="btn btn-primary">Sign Up</a>
+        <a href="{% url 'login' %}" class="btn btn-secondary">Log In</a>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Ergoobot. All Rights Reserved.</p>
+        </div>
+    </footer>
+{% endblock %}

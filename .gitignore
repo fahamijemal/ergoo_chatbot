@@ -1,0 +1,15 @@
+
+# Ignore .env file
+.env
+
+# Python bytecode files
+*.pyc
+
+# Django static files
+/static/
+
+# Database file
+db.sqlite3
+
+# Virtual environment directory
+venv/

@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}User History{% endblock %}
+
+{% block content %}
+<h2>User History</h2>
+<ul>
+    {% for record in history %}
+        <li>{{ record.timestamp }} - {{ record.action }}</li>
+    {% empty %}
+        <li>No history available.</li>
+    {% endfor %}
+</ul>
+
+<h3>Sessions</h3>
+<ul>
+    {% for session in sessions %}
+        <li>
+            Session ID: {{ session.id }} - Created at: {{ session.created_at }}
+            <a href="{% url 'load_session_history' session_id=session.id %}">View History</a>
+        </li>
+    {% empty %}
+        <li>No sessions available.</li>
+    {% endfor %}
+</ul>
+
+{% endblock %}
